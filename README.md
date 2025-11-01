@@ -264,6 +264,29 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 MIT License - Xem file LICENSE để biết chi tiết.
 
+## 💝 Donate
+
+Nếu project này hữu ích cho bạn, bạn có thể donate để hỗ trợ duy trì và phát triển:
+
+### 💳 Thông tin thanh toán
+
+**Ngân hàng:** MB Bank  
+**Số tài khoản:** 0816226086  
+**Tên tài khoản:** NGUYEN NGO THUONG  
+**Nội dung:** donate backup rclone
+
+### 📱 Thanh toán nhanh
+
+[![Donate QR Code](MB-0816226086-qr_only.png)](https://nguyenngothuong.com/payment?des=donate+backup+rclone)
+
+💡 **Mẹo:** Quét mã QR bằng app ngân hàng để thanh toán nhanh chóng. Bạn có thể nhập số tiền trên website để tự động điền vào QR.
+
+🔗 **Website:** [nguyenngothuong.com](https://nguyenngothuong.com) | [diginno.net](https://diginno.net)
+
+---
+
+Cảm ơn bạn đã ủng hộ! 🙏
+
 ## 🙏 Acknowledgments
 
 - [Rclone](https://rclone.org/) - Tool để sync files với cloud storage
