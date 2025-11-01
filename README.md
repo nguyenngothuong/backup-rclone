@@ -4,12 +4,6 @@
 
 Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone với stream upload, không tốn dung lượng đĩa local.
 
-# PostgreSQL Backup với Rclone - Stream Upload
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone với stream upload, không tốn dung lượng đĩa local.
-
 ## ✨ Tính năng
 
 - 🚀 **Stream Upload**: Backup trực tiếp từ PostgreSQL → gzip → Google Drive, không tốn dung lượng đĩa

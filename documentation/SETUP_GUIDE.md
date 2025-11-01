@@ -1,7 +1,5 @@
 # 📦 PostgreSQL Backup với Rclone - Hướng Dẫn Setup
 
-# 📦 PostgreSQL Backup với Rclone - Hướng Dẫn Setup
-
 ## 🎯 Tổng quan
 
 Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone với các tính năng:
