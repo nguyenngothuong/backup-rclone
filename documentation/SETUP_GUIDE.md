@@ -1,5 +1,7 @@
 # 📦 PostgreSQL Backup với Rclone - Hướng Dẫn Setup
 
+# 📦 PostgreSQL Backup với Rclone - Hướng Dẫn Setup
+
 ## 🎯 Tổng quan
 
 Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone với các tính năng:
@@ -8,6 +10,100 @@ Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone
 - ✅ Retention policy: Daily (7 ngày), Weekly (12 tuần), Monthly (12 tháng)
 - ✅ Webhook notification (optional)
 - ✅ Logging đầy đủ
+
+## 📊 Backup Flow Diagram
+
+### Tổng quan Backup Process
+
+```mermaid
+sequenceDiagram
+    participant Cron as Cron Job
+    participant Script as Backup Script
+    participant PG as PostgreSQL
+    participant Gzip as Compression
+    participant Rclone as Rclone
+    participant Drive as Google Drive
+    participant Webhook as Webhook (Optional)
+    
+    Cron->>Script: Trigger Daily Backup
+    Script->>PG: Get Database List
+    loop For Each Database
+        Script->>PG: pg_dump -Fc
+        PG-->>Script: Database Dump Stream
+        Script->>Gzip: Compress Stream
+        Gzip-->>Script: Compressed Stream
+        Script->>Rclone: rclone rcat
+        Rclone->>Drive: Upload to daily/
+        Drive-->>Rclone: Upload Success
+        alt Is Sunday
+            Script->>Drive: Copy to weekly/
+        end
+        alt Is 1st of Month
+            Script->>Drive: Copy to monthly/
+        end
+    end
+    Script->>PG: pg_dumpall
+    PG-->>Script: Full Backup Stream
+    Script->>Gzip: Compress
+    Script->>Rclone: Upload
+    Rclone->>Drive: Upload full_backup_all.sql.gz
+    Script->>Drive: Cleanup Old Backups
+    Script->>Webhook: Send Notification
+    Webhook-->>Script: HTTP 200 OK
+```
+
+### Retention Policy Logic
+
+```mermaid
+graph TB
+    subgraph "Daily Backup"
+        A1[Backup Every Day] --> A2[Save to daily/]
+        A2 --> A3{7 days passed?}
+        A3 -->|Yes| A4[Delete Old Backup]
+        A3 -->|No| A5[Keep Backup]
+    end
+    
+    subgraph "Weekly Backup"
+        B1[Every Sunday] --> B2[Copy from daily/]
+        B2 --> B3[Save to weekly/]
+        B3 --> B4{84 days passed?}
+        B4 -->|Yes| B5[Delete Old Backup]
+        B4 -->|No| B6[Keep Backup]
+    end
+    
+    subgraph "Monthly Backup"
+        C1[1st of Month] --> C2[Copy from daily/]
+        C2 --> C3[Save to monthly/]
+        C3 --> C4{365 days passed?}
+        C4 -->|Yes| C5[Delete Old Backup]
+        C4 -->|No| C6[Keep Backup]
+    end
+    
+    style A1 fill:#e1f5ff
+    style B1 fill:#fff4e1
+    style C1 fill:#ffe1f5
+```
+
+### Error Handling Flow
+
+```mermaid
+graph TD
+    A[Start Backup] --> B[Backup Database]
+    B --> C{Success?}
+    C -->|Yes| D[Log Success]
+    C -->|No| E[Log Error]
+    D --> F{More Databases?}
+    E --> G[Increment Failed Count]
+    G --> F
+    F -->|Yes| B
+    F -->|No| H{Any Failed?}
+    H -->|Yes| I[Send Failed Webhook]
+    H -->|No| J[Send Success Webhook]
+    I --> K[Exit Code 1]
+    J --> L[Exit Code 0]
+    K --> M[End]
+    L --> M
+```
 
 ## 📋 Yêu cầu
 
@@ -146,6 +242,23 @@ WEBHOOK_URL=""
 ```
 
 ## 🔄 Restore từ Backup
+
+### Restore Flow Diagram
+
+```mermaid
+graph LR
+    A[Select Backup File] --> B[rclone cat]
+    B --> C[Download Stream]
+    C --> D[gunzip]
+    D --> E{Backup Type?}
+    E -->|Single DB| F[pg_restore]
+    E -->|Full Backup| G[psql]
+    F --> H[Restore Complete]
+    G --> H
+    
+    style A fill:#e1f5ff
+    style H fill:#e1ffe1
+```
 
 ### Restore một database
 

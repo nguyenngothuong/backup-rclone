@@ -4,6 +4,12 @@
 
 Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone với stream upload, không tốn dung lượng đĩa local.
 
+# PostgreSQL Backup với Rclone - Stream Upload
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone với stream upload, không tốn dung lượng đĩa local.
+
 ## ✨ Tính năng
 
 - 🚀 **Stream Upload**: Backup trực tiếp từ PostgreSQL → gzip → Google Drive, không tốn dung lượng đĩa
@@ -12,6 +18,111 @@ Hệ thống backup PostgreSQL tự động lên Google Drive sử dụng Rclone
 - 🔔 **Webhook Notification**: Optional webhook để nhận thông báo backup
 - 📝 **Logging**: Logging đầy đủ với timestamp và kết quả chi tiết
 - ⚙️ **Automated**: Cron job tự động chạy hàng ngày
+
+## 📊 Flow Logic Backup
+
+### Backup Process Flow
+
+```mermaid
+graph TD
+    A[Cron Job Trigger] --> B[Start Backup Script]
+    B --> C{Get Database List}
+    C --> D[For Each Database]
+    D --> E[pg_dump -Fc]
+    E --> F[gzip Compression]
+    F --> G[rclone rcat Stream Upload]
+    G --> H{Upload Success?}
+    H -->|Yes| I[Save to daily/]
+    H -->|No| J[Log Error]
+    I --> K{Is Sunday?}
+    K -->|Yes| L[Copy to weekly/]
+    K -->|No| M{Is 1st of Month?}
+    L --> M
+    M -->|Yes| N[Copy to monthly/]
+    M -->|No| O[Continue Next DB]
+    N --> O
+    O --> P{More Databases?}
+    P -->|Yes| D
+    P -->|No| Q[Backup pg_dumpall]
+    Q --> R[gzip + Upload]
+    R --> S[Cleanup Old Backups]
+    S --> T[Send Webhook Notification]
+    T --> U[End]
+    J --> U
+```
+
+### Retention Policy Flow
+
+```mermaid
+graph LR
+    A[Daily Backup] --> B{daily/ folder}
+    B --> C{After 7 days}
+    C -->|Delete| D[Cleanup]
+    
+    E[Weekly Backup<br/>Every Sunday] --> F{weekly/ folder}
+    F --> G{After 84 days}
+    G -->|Delete| D
+    
+    H[Monthly Backup<br/>1st of Month] --> I{monthly/ folder}
+    I --> J{After 365 days}
+    J -->|Delete| D
+    
+    D --> K[Storage Optimized]
+```
+
+### Backup Architecture
+
+```mermaid
+graph TB
+    subgraph "PostgreSQL Container"
+        A[PostgreSQL Database]
+    end
+    
+    subgraph "Backup Process"
+        B[pg_dump -Fc]
+        C[gzip Compression]
+        D[rclone Stream]
+    end
+    
+    subgraph "Google Drive Storage"
+        E[daily/]
+        F[weekly/]
+        G[monthly/]
+    end
+    
+    subgraph "Monitoring"
+        H[Log Files]
+        I[Webhook Notification]
+    end
+    
+    A -->|pg_dump| B
+    B -->|Stream| C
+    C -->|Stream| D
+    D -->|Upload| E
+    E -->|Copy Sunday| F
+    E -->|Copy 1st| G
+    D -->|Log| H
+    D -->|Notify| I
+```
+
+### Restore Process Flow
+
+```mermaid
+graph TD
+    A[Start Restore] --> B[Select Backup File]
+    B --> C{rclone cat from Google Drive}
+    C --> D[gunzip Decompress]
+    D --> E{Backup Type?}
+    E -->|Single DB| F[pg_restore]
+    E -->|Full Backup| G[psql]
+    F --> H[Restore to Database]
+    G --> I[Restore Users/Roles]
+    H --> J[Verify Restore]
+    I --> J
+    J --> K{Success?}
+    K -->|Yes| L[✅ Restore Complete]
+    K -->|No| M[❌ Check Logs]
+```
 
 ## 📋 Yêu cầu
 
